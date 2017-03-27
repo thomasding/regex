@@ -10,32 +10,32 @@ namespace regex {
  * A character category can be a single character, a range of character or a
  * named category like [:num:].
  */
-template <class Char_>
-class CharCategory {
+template <class Char>
+class char_category {
  public:
-  typedef Char_ CharType;
+  typedef Char char_type;
 
   /*! \brief The type of the character category.
    */
-  enum CategoryType {
-    kEmpty,       //!< Does not match any character
-    kSingleChar,  //!< A single character
+  enum category_type {
+    k_empty,       //!< Does not match any character
+    k_single_char,  //!< A single character
   };
 
   /*! \brief Create a category of no character.
    */
-  CharCategory() : type_(kEmpty) {}
+  char_category() : type_(k_empty) {}
 
   /*! \brief Create a category of a single character.
    */
-  explicit CharCategory(CharType ch) : type_(kSingleChar), ch_(ch) {}
+  explicit char_category(char_type ch) : type_(k_single_char), ch_(ch) {}
 
   /*! \brief Return true if ch is in the category.
    */
-  bool match(CharType ch) const {
-    if (type_ == kSingleChar) {
+  bool match(char_type ch) const {
+    if (type_ == k_single_char) {
       return ch == ch_;
-    } if (type_ == kEmpty) {
+    } if (type_ == k_empty) {
       assert(false);
     } else {
       assert(false);
@@ -45,12 +45,12 @@ class CharCategory {
   /*! \brief Assert the category is not empty.
    */
   void assert_not_empty() const {
-    assert(type_ != kEmpty);
+    assert(type_ != k_empty);
   }
 
  private:
-  CategoryType type_;
-  CharType ch_;
+  category_type type_;
+  char_type ch_;
 };
 }
 
