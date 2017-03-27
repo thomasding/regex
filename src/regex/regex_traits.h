@@ -15,6 +15,12 @@ class regex_traits {
   typedef std::ctype<char_type> ctype_type;
   typedef std::locale locale_type;
 
+  /*! \brief Return the length of the null-terminated string p.
+   */
+  static std::size_t length(const char_type* p) {
+    return std::char_traits<char_type>::length(p);
+  }
+
   /*! \brief Translate the equivalent characters into the same value in the
    * imbued locale.
    */
