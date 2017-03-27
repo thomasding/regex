@@ -7,9 +7,9 @@
 
 using namespace regex;
 
-typedef NFA<Instruction<char>, std::allocator<Instruction<char>>> CNFA;
+typedef nfa<instruction<char>, std::allocator<instruction<char>>> CNFA;
 
-typedef RedundantInsnOptimizer<CNFA, std::allocator<int>>
+typedef redundant_insn_optimizer<CNFA, std::allocator<int>>
     CRedundantInsnOptimizer;
 
 TEST(RedundantInsnOptimizerTest, EmptyNFA) {
@@ -29,8 +29,8 @@ TEST(RedundantInsnOptimizerTest, OrdinaryNFA) {
 
   CRedundantInsnOptimizer opt(std::move(nfa));
   ASSERT_EQ(5ul, opt.nfa().size());
-  ASSERT_EQ(kFork, opt.nfa()[0].opcode);
+  ASSERT_EQ(k_fork, opt.nfa()[0].opcode);
   ASSERT_EQ(4, opt.nfa()[0].next);
   ASSERT_EQ(4, opt.nfa()[0].next2);
-  ASSERT_EQ(kAccept, opt.nfa()[4].opcode);
+  ASSERT_EQ(k_accept, opt.nfa()[4].opcode);
 }

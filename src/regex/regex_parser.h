@@ -42,54 +42,54 @@ namespace regex {
  * The parser functions are named with the snake case of the corresponding
  * nonterminal syntax.
  */
-template <class Scanner_, class CharCategory_, class NFA_>
-class RegexParser {
+template <class Scanner, class CharCategory, class NFA>
+class regex_parser {
  public:
-  typedef Scanner_ ScannerType;
-  typedef typename Scanner_::CharType CharType;
-  typedef CharCategory_ CharCategoryType;
-  typedef NFA_ NFAType;
-  typedef typename NFAType::AllocatorType AllocatorType;
+  typedef Scanner scanner_type;
+  typedef typename scanner_type::char_type char_type;
+  typedef CharCategory char_category_type;
+  typedef NFA nfa_type;
+  typedef typename nfa_type::allocator_type allocator_type;
 
   /*! \brief Parse a regex.
    */
-  explicit RegexParser(ScannerType s) : scanner_(std::move(s)) {
+  explicit regex_parser(scanner_type s) : scanner_(std::move(s)) {
     parse_regex();
   }
 
   /*! \brief Parse a regex.
    */
-  explicit RegexParser(ScannerType s, const AllocatorType& alloc)
+  explicit regex_parser(scanner_type s, const allocator_type& alloc)
       : scanner_(std::move(s)), nfa_(alloc) {
     parse_regex();
   }
 
   /*! \brief Get the NFA.
    */
-  NFAType& nfa() { return nfa_; }
+  nfa_type& nfa() { return nfa_; }
 
   /*! \brief Get the NFA.
    */
-  const NFAType& nfa() const { return nfa_; }
+  const nfa_type& nfa() const { return nfa_; }
 
  private:
   /*! \brief A fragment of the uncompleted NFA.
    */
-  struct Fragment {
+  struct fragment {
     int start;         //!< The start instruction id
     int end;           //!< The end instruction id
     bool maybe_empty;  //!< May match empty string.
   };
 
-  ScannerType scanner_;
-  NFAType nfa_;
+  scanner_type scanner_;
+  nfa_type nfa_;
 
   /*! \brief Parse nonterminal Regex.
    */
   void parse_regex() {
-    Fragment f = parse_sub();
-    if (scanner_.cur_token() != kEOF) {
-      REGEX_THROW(kUnexpectedToken, scanner_.cur_pos());
+    fragment f = parse_sub();
+    if (scanner_.cur_token() != k_eof) {
+      regex_throw(k_unexpected_token, scanner_.cur_pos());
     }
 
     int sid = nfa_.append_accept();
@@ -100,16 +100,16 @@ class RegexParser {
 
   /*! \brief Parse nonterminal Sub and RestSub.
    */
-  Fragment parse_sub() {
-    Fragment prev = parse_seq();
+  fragment parse_sub() {
+    fragment prev = parse_seq();
 
-    while (scanner_.cur_token() == kOr) {
+    while (scanner_.cur_token() == k_or) {
       scanner_.advance();
 
-      Fragment seq2 = parse_seq();
+      fragment seq2 = parse_seq();
 
       int start = nfa_.append_fork(prev.start, seq2.start);
-      int end = nfa_.append_goto(kDangled);
+      int end = nfa_.append_goto(k_dangled);
 
       link_dangled_pointer(prev.end, end);
       link_dangled_pointer(seq2.end, end);
@@ -124,34 +124,34 @@ class RegexParser {
 
   /*! \brief Parse nonterminal Seq and RestSeq.
    */
-  Fragment parse_seq() {
+  fragment parse_seq() {
     if (is_atom_head()) {
-      Fragment prev = parse_term();
+      fragment prev = parse_term();
       while (is_atom_head()) {
-        Fragment term2 = parse_term();
+        fragment term2 = parse_term();
         link_dangled_pointer(prev.end, term2.start);
         prev.end = term2.end;
         prev.maybe_empty = prev.maybe_empty && term2.maybe_empty;
       }
       return prev;
     } else {
-      int sid = nfa_.append_goto(kDangled);
+      int sid = nfa_.append_goto(k_dangled);
       return {sid, sid, true};
     }
   }
 
   /*! \brief Parse nonterminal Term and RestTerm.
    */
-  Fragment parse_term() {
-    Fragment prev = parse_atom();
+  fragment parse_term() {
+    fragment prev = parse_atom();
 
     // The following is the parser for RestTerm.
     while (true) {
-      if (scanner_.cur_token() == kStar) {
+      if (scanner_.cur_token() == k_star) {
         prev = parse_star(prev);
-      } else if (scanner_.cur_token() == kPlus) {
+      } else if (scanner_.cur_token() == k_plus) {
         prev = parse_plus(prev);
-      } else if (scanner_.cur_token() == kOptional) {
+      } else if (scanner_.cur_token() == k_optional) {
         prev = parse_optional(prev);
       } else {
         break;
@@ -163,7 +163,7 @@ class RegexParser {
 
   /*! \brief Parse star quantifier.
    */
-  Fragment parse_star(Fragment cur_frag) {
+  fragment parse_star(fragment cur_frag) {
     scanner_.advance();
 
     int start = cur_frag.start;
@@ -171,7 +171,7 @@ class RegexParser {
       start = nfa_.append_advance(cur_frag.start);
     }
 
-    int loop = nfa_.append_fork(start, kDangled);
+    int loop = nfa_.append_fork(start, k_dangled);
     link_dangled_pointer(cur_frag.end, loop);
 
     return {loop, loop, true};
@@ -179,7 +179,7 @@ class RegexParser {
 
   /*! \brief Parse plus quantifier.
    */
-  Fragment parse_plus(Fragment cur_frag) {
+  fragment parse_plus(fragment cur_frag) {
     scanner_.advance();
 
     int start = cur_frag.start;
@@ -187,7 +187,7 @@ class RegexParser {
       start = nfa_.append_advance(cur_frag.start);
     }
 
-    int loop = nfa_.append_fork(start, kDangled);
+    int loop = nfa_.append_fork(start, k_dangled);
     link_dangled_pointer(cur_frag.end, loop);
 
     return {start, loop, cur_frag.maybe_empty};
@@ -195,10 +195,10 @@ class RegexParser {
 
   /*! \brief Parse optional quantifier.
    */
-  Fragment parse_optional(Fragment cur_frag) {
+  fragment parse_optional(fragment cur_frag) {
     scanner_.advance();
 
-    int mergenode = nfa_.append_goto(kDangled);
+    int mergenode = nfa_.append_goto(k_dangled);
     int forknode = nfa_.append_fork(cur_frag.start, mergenode);
     link_dangled_pointer(cur_frag.end, mergenode);
 
@@ -207,22 +207,22 @@ class RegexParser {
 
   /*! \brief Parse nonterminal Atom.
    */
-  Fragment parse_atom() {
-    if (scanner_.cur_token() == kCharacter) {
+  fragment parse_atom() {
+    if (scanner_.cur_token() == k_character) {
       int sid = nfa_.append_match_char_category(
-          CharCategoryType(scanner_.cur_char()), kDangled);
+          char_category_type(scanner_.cur_char()), k_dangled);
       scanner_.advance();
       return {sid, sid, false};
-    } else if (scanner_.cur_token() == kLeftGroup) {
+    } else if (scanner_.cur_token() == k_left_group) {
       scanner_.advance();
-      Fragment s = parse_sub();
-      if (scanner_.cur_token() != kRightGroup) {
-        REGEX_THROW(kMissingRightGroup, scanner_.cur_pos());
+      fragment s = parse_sub();
+      if (scanner_.cur_token() != k_right_group) {
+        regex_throw(k_missing_right_group, scanner_.cur_pos());
       }
       scanner_.advance();
       return s;
     } else {
-      REGEX_THROW(kMissingAtom, scanner_.cur_pos());
+      regex_throw(k_missing_atom, scanner_.cur_pos());
     }
   }
 
@@ -230,15 +230,15 @@ class RegexParser {
    */
   void link_dangled_pointer(int end, int next) {
     auto& insn = nfa_.at(end);
-    if (insn.next == kDangled) insn.next = next;
-    if (insn.next2 == kDangled) insn.next2 = next;
+    if (insn.next == k_dangled) insn.next = next;
+    if (insn.next2 == k_dangled) insn.next2 = next;
   }
 
   /*! \brief Return true of the lookahead token is the head of an Atom.
    */
   bool is_atom_head() {
     auto t = scanner_.cur_token();
-    return t == kCharacter || t == kLeftGroup;
+    return t == k_character || t == k_left_group;
   }
 };
 }

@@ -8,26 +8,26 @@ namespace regex {
 
 /*! \brief The type traits for the regex classes.
  */
-template <class Char_>
-class RegexTraits {
+template <class Char>
+class regex_traits {
  public:
-  typedef Char_ CharType;
-  typedef std::ctype<CharType> CtypeType;
-  typedef std::locale LocaleType;
+  typedef Char char_type;
+  typedef std::ctype<char_type> ctype_type;
+  typedef std::locale locale_type;
 
   /*! \brief Translate the equivalent characters into the same value in the
    * imbued locale.
    */
-  CharType translate(CharType c) const { return c; }
+  char_type translate(char_type c) const { return c; }
 
   /*! \brief Translate the case-insensitive equivalent characters into the same
    * value in the imbued locale.
    */
-  CharType translate_nocase(CharType c) const { return ctype_.to_lower(c); }
+  char_type translate_nocase(char_type c) const { return ctype_.to_lower(c); }
 
   /*! \brief Imbue a locale.
    */
-  LocaleType imbue(LocaleType loc) {
+  locale_type imbue(locale_type loc) {
     using std::swap;
     swap(loc, loc_);
     return loc;
@@ -35,11 +35,11 @@ class RegexTraits {
 
   /*! \brief Get the current locale.
    */
-  LocaleType getloc() const { return loc_; }
+  locale_type getloc() const { return loc_; }
 
  private:
-  LocaleType loc_;
-  CtypeType ctype_;
+  locale_type loc_;
+  ctype_type ctype_;
 };
 }
 

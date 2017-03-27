@@ -12,44 +12,44 @@ namespace regex {
 
 /*! \brief The type of the tokens.
  */
-enum Token {
-  kEOF,         //!< The scanner has reached the end
-  kStar,        //!< Kleene-star "*" quantifier
-  kPlus,        //!< Kleene-plus "+" quantifier
-  kOptional,    //!< Optional "?" quantifier
-  kOr,          //!< "|" operator
-  kLeftGroup,   //!< "(" operator
-  kRightGroup,  //!< ")" operator
-  kCharacter,   //!< An ordinary character
+enum token {
+  k_eof,         //!< The scanner has reached the end
+  k_star,        //!< Kleene-star "*" quantifier
+  k_plus,        //!< Kleene-plus "+" quantifier
+  k_optional,    //!< Optional "?" quantifier
+  k_or,          //!< "|" operator
+  k_left_group,   //!< "(" operator
+  k_right_group,  //!< ")" operator
+  k_character,   //!< An ordinary character
 };
 
 /*! \brief The scanner of the regex.
  */
-template <class Iterator_>
-class RegexScanner {
+template <class Iterator>
+class regex_scanner {
  public:
-  typedef Iterator_ IteratorType;
-  typedef typename std::iterator_traits<IteratorType>::value_type CharType;
-  typedef const std::ctype<CharType> CtypeType;
-  typedef std::locale LocaleType;
+  typedef Iterator iterator;
+  typedef typename std::iterator_traits<iterator>::value_type char_type;
+  typedef const std::ctype<char_type> ctype_type;
+  typedef std::locale locale_type;
 
-  RegexScanner(IteratorType first, IteratorType last, const LocaleType& loc)
+  regex_scanner(iterator first, iterator last, const locale_type& loc)
       : first_(first),
         last_(last),
         pos_(0),
-        ctype_(std::use_facet<CtypeType>(loc)) {
+        ctype_(std::use_facet<ctype_type>(loc)) {
     advance();
   }
 
   /*! \brief Return the current token.
    */
-  Token cur_token() const noexcept { return cur_token_; }
+  token cur_token() const noexcept { return cur_token_; }
 
   /*! \brief Return the current character.
    *
    * The current character is valid only if the current token is kCharacter.
    */
-  CharType cur_char() const noexcept { return cur_char_; }
+  char_type cur_char() const noexcept { return cur_char_; }
 
   /*! \brief Return the current position.
    */
@@ -59,42 +59,42 @@ class RegexScanner {
    */
   void advance() {
     if (first_ == last_) {
-      cur_token_ = kEOF;
+      cur_token_ = k_eof;
     } else if (*first_ == ctype_.widen('*')) {
-      cur_token_ = kStar;
+      cur_token_ = k_star;
       advance_char();
     } else if (*first_ == ctype_.widen('+')) {
-      cur_token_ = kPlus;
+      cur_token_ = k_plus;
       advance_char();
     } else if (*first_ == ctype_.widen('?')) {
-      cur_token_ = kOptional;
+      cur_token_ = k_optional;
       advance_char();
     } else if (*first_ == ctype_.widen('(')) {
-      cur_token_ = kLeftGroup;
+      cur_token_ = k_left_group;
       advance_char();
     } else if (*first_ == ctype_.widen(')')) {
-      cur_token_ = kRightGroup;
+      cur_token_ = k_right_group;
       advance_char();
     } else if (*first_ == ctype_.widen('|')) {
-      cur_token_ = kOr;
+      cur_token_ = k_or;
       advance_char();
     } else if (*first_ == ctype_.widen('\\')) {
       eat_escape();
     } else {
-      cur_token_ = kCharacter;
+      cur_token_ = k_character;
       cur_char_ = *first_;
       advance_char();
     }
   }
 
  private:
-  IteratorType first_;
-  IteratorType last_;
+  iterator first_;
+  iterator last_;
   int pos_;
-  CtypeType& ctype_;
+  ctype_type& ctype_;
 
-  Token cur_token_;
-  CharType cur_char_;
+  token cur_token_;
+  char_type cur_char_;
 
   /*! \brief Eat the escaped character.
    *
@@ -105,7 +105,7 @@ class RegexScanner {
     advance_char();
 
     if (first_ == last_) {
-      REGEX_THROW(kEscapeEOF, pos_);
+      regex_throw(k_escape_eof, pos_);
     }
 
     auto c = *first_;
@@ -113,11 +113,11 @@ class RegexScanner {
         c == ctype_.widen('?') || c == ctype_.widen('(') ||
         c == ctype_.widen(')') || c == ctype_.widen('\\') ||
         c == ctype_.widen('|')) {
-      cur_token_ = kCharacter;
+      cur_token_ = k_character;
       cur_char_ = c;
       advance_char();
     } else {
-      REGEX_THROW(kEscapeBadChar, pos_);
+      regex_throw(k_escape_bad_char, pos_);
     }
   }
 

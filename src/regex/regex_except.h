@@ -8,29 +8,29 @@ namespace regex {
 
 /*! \brief The regex errors.
  */
-enum Error {
-  kEscapeEOF,
-  kEscapeBadChar,
-  kMissingRightGroup,
-  kMissingAtom,
-  kUnexpectedToken,
+enum error_code {
+  k_escape_eof,
+  k_escape_bad_char,
+  k_missing_right_group,
+  k_missing_atom,
+  k_unexpected_token,
 };
 
 /*! \brief The error class for regex.
  */
-class RegexError final : public std::exception {
+class regex_error final : public std::exception {
  public:
-  RegexError(Error err, int pos) : what_() {
+  regex_error(error_code err, int pos) : what_() {
     if (pos >= 0)
       what_ = "regex error at " + std::to_string(pos) + ": ";
     else
       what_ = "regex error: ";
 
     switch (err) {
-      case kEscapeEOF:
+      case k_escape_eof:
         what_ += "no character after backslash";
         break;
-      case kEscapeBadChar:
+      case k_escape_bad_char:
         what_ += "character cannot be escaped";
         break;
       default:
@@ -47,9 +47,9 @@ class RegexError final : public std::exception {
 }
 
 #if REGEX_ENABLE_EXCEPTION
-#define REGEX_THROW(err, pos) throw ::regex::RegexError(err, pos)
+#define regex_throw(err, pos) throw ::regex::regex_error(err, pos)
 #else
-#define REGEX_THROW(err, pos) ::std::terminate()
+#define regex_throw(err, pos) ::std::terminate()
 #endif
 
 #endif

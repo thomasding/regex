@@ -10,22 +10,22 @@ namespace regex {
 
 /*! \brief The type of the instruction.
  */
-enum Opcode {
+enum opcode {
   /*! \brief Match a character.
    */
-  kMatchCharCategory,
+  k_match_char_category,
 
   /*! \brief Go to another instruction unconditionally.
    */
-  kGoto,
+  k_goto,
 
   /*! \brief Fork a new thread at the current position.
    */
-  kFork,
+  k_fork,
 
   /*! \brief Accept the string.
    */
-  kAccept,
+  k_accept,
 
   /*! \brief Go to another instruction only if the position in the string to be
    * matched has advanced.
@@ -39,61 +39,60 @@ enum Opcode {
    * record of the thread. Otherwise, the thread quits. If not, it records the
    * current position in the string to be matched in the thread.
    */
-  kAdvance,
+  k_advance,
 };
 
 /*! \brief Constants for the next and next2 field of an instruction.
  */
-enum NextConstants {
+enum next_constants {
   /*! \brief The next instruction is dangled.
    */
-  kDangled = -1,
+  k_dangled = -1,
 
   /*! \brief The next instruction does not exist.
    */
-  kNull = -2
+  k_null = -2
 };
 
 /*! \brief An instruction in the NFA.
  */
-template <class Char_>
-struct Instruction {
-  typedef Char_ CharType;
+template <class Char>
+struct instruction {
+  typedef Char char_type;
 
   /*! \brief The opcode of the instruction.
    */
-  Opcode opcode;
+  opcode opcode;
 
   /*! \brief The character category.
    *
-   * Used if opcode == kMatchCharCategory.
+   * Used if opcode == k_match_char_category.
    */
-  CharCategory<CharType> cc = {};
+  char_category<char_type> cc = {};
 
   /*! \brief The location to jump to.
    *
-   * Used if opcode == kMatchCharCategory, kGoto, kFork, or kAdvance.
+   * Used if opcode == k_match_char_category, k_goto, k_fork, or k_advance.
    */
-  int next = kNull;
+  int next = k_null;
 
   /*! \brief The location of the new thread.
    *
-   * Used if opcode == kFork.
+   * Used if opcode == k_fork.
    */
-  int next2 = kNull;
+  int next2 = k_null;
 };
 
-template <class Instruction_, class Allocator_>
-class NFA : public std::vector<Instruction_, Allocator_> {
+template <class Instruction, class Allocator>
+class nfa : public std::vector<Instruction, Allocator> {
  public:
-  typedef Instruction_ InstructionType;
-  typedef typename InstructionType::CharType CharType;
-  typedef CharCategory<CharType> CharCategoryType;
-  typedef Allocator_ AllocatorType;
+  typedef Instruction instruction_type;
+  typedef typename Instruction::char_type char_type;
+  typedef char_category<char_type> char_category_type;
 
   /*! \brief Use the parent constructors.
    */
-  using std::vector<Instruction_, Allocator_>::vector;
+  using std::vector<Instruction, Allocator>::vector;
 
   /*! \brief Set the start id of the nfa.
    */
@@ -106,8 +105,8 @@ class NFA : public std::vector<Instruction_, Allocator_> {
   /*! \brief Append an instruction to match a character category and return the
    * instruction id.
    */
-  int append_match_char_category(CharCategoryType cc, int next) {
-    InstructionType insn{kMatchCharCategory};
+  int append_match_char_category(char_category_type cc, int next) {
+    instruction_type insn{k_match_char_category};
     insn.cc = std::move(cc);
     insn.next = next;
     this->push_back(insn);
@@ -118,9 +117,9 @@ class NFA : public std::vector<Instruction_, Allocator_> {
    * return the instruction id.
    */
   int append_goto(int next) {
-    assert(next >= 0 || next == kDangled);
+    assert(next >= 0 || next == k_dangled);
 
-    InstructionType insn{kGoto};
+    instruction_type insn{k_goto};
     insn.next = next;
     this->push_back(insn);
     return this->size() - 1;
@@ -129,10 +128,10 @@ class NFA : public std::vector<Instruction_, Allocator_> {
   /*! \brief Append an instruction to fork and return its id.
    */
   int append_fork(int next1, int next2) {
-    assert(next1 >= 0 || next1 == kDangled);
-    assert(next2 >= 0 || next2 == kDangled);
+    assert(next1 >= 0 || next1 == k_dangled);
+    assert(next2 >= 0 || next2 == k_dangled);
 
-    InstructionType insn{kFork};
+    instruction_type insn{k_fork};
     insn.next = next1;
     insn.next2 = next2;
     this->push_back(insn);
@@ -142,7 +141,7 @@ class NFA : public std::vector<Instruction_, Allocator_> {
   /*! \brief Append an instruction of reaching the accept state.
    */
   int append_accept() {
-    InstructionType insn{kAccept};
+    instruction_type insn{k_accept};
     this->push_back(insn);
     return this->size() - 1;
   }
@@ -150,7 +149,7 @@ class NFA : public std::vector<Instruction_, Allocator_> {
   /*! \brief Append an instruction of the advance flag.
    */
   int append_advance(int next) {
-    InstructionType insn{kAdvance};
+    instruction_type insn{k_advance};
     insn.next = next;
     this->push_back(insn);
     return this->size() - 1;
@@ -163,17 +162,17 @@ class NFA : public std::vector<Instruction_, Allocator_> {
   void assert_complete() {
     int max_insn_id = int(this->size()) - 1;
     for (auto& insn : *this) {
-      if (insn.opcode == kMatchCharCategory) {
+      if (insn.opcode == k_match_char_category) {
         insn.cc.assert_not_empty();
         assert(insn.next >= 0 && insn.next <= max_insn_id);
-      } else if (insn.opcode == kGoto) {
+      } else if (insn.opcode == k_goto) {
         assert(insn.next >= 0 && insn.next <= max_insn_id);
-      } else if (insn.opcode == kFork) {
+      } else if (insn.opcode == k_fork) {
         assert(insn.next >= 0 && insn.next <= max_insn_id);
         assert(insn.next2 >= 0 && insn.next2 <= max_insn_id);
-      } else if (insn.opcode == kAdvance) {
+      } else if (insn.opcode == k_advance) {
         assert(insn.next >= 0 && insn.next <= max_insn_id);
-      } else if (insn.opcode == kAccept) {
+      } else if (insn.opcode == k_accept) {
         /* Empty */
       } else {
         assert(false);

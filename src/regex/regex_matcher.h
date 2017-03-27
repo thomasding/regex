@@ -3,7 +3,7 @@
 
 namespace regex {
 
-class RegexMatcher {
+class regex_matcher {
 };
 }
 
