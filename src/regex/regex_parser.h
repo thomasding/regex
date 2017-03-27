@@ -88,6 +88,10 @@ class RegexParser {
    */
   void parse_regex() {
     Fragment f = parse_sub();
+    if (scanner_.cur_token() != kEOF) {
+      REGEX_THROW(kUnexpectedToken, scanner_.cur_pos());
+    }
+
     int sid = nfa_.append_accept();
     link_dangled_pointer(f.end, sid);
     nfa_.set_start_id(f.start);

@@ -13,6 +13,7 @@ enum Error {
   kEscapeBadChar,
   kMissingRightGroup,
   kMissingAtom,
+  kUnexpectedToken,
 };
 
 /*! \brief The error class for regex.

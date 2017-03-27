@@ -102,3 +102,73 @@ TEST(RegexParserTest, Or) {
   EXPECT_EQ(kAccept, p.nfa()[4].opcode);
   EXPECT_EQ(2, p.nfa().start_id());
 }
+
+TEST(RegexParserTest, Group) {
+  std::string v("(ab)*");
+  auto p = make_parser(v);
+  ASSERT_EQ(4u, p.nfa().size());
+  EXPECT_EQ(kMatchCharCategory, p.nfa()[0].opcode);
+  EXPECT_EQ(1, p.nfa()[0].next);
+  EXPECT_EQ(kMatchCharCategory, p.nfa()[1].opcode);
+  EXPECT_EQ(2, p.nfa()[1].next);
+  EXPECT_EQ(kFork, p.nfa()[2].opcode);
+  EXPECT_EQ(0, p.nfa()[2].next);
+  EXPECT_EQ(3, p.nfa()[2].next2);
+  EXPECT_EQ(kAccept, p.nfa()[3].opcode);
+  EXPECT_EQ(2, p.nfa().start_id());
+}
+
+TEST(RegexParserTest, EmptyStar) {
+  std::string v("()*");
+  auto p = make_parser(v);
+  ASSERT_EQ(4u, p.nfa().size());
+  EXPECT_EQ(kGoto, p.nfa()[0].opcode);
+  EXPECT_EQ(2, p.nfa()[0].next);
+  EXPECT_EQ(kAdvance, p.nfa()[1].opcode);
+  EXPECT_EQ(0, p.nfa()[1].next);
+  EXPECT_EQ(kFork, p.nfa()[2].opcode);
+  EXPECT_EQ(1, p.nfa()[2].next);
+  EXPECT_EQ(3, p.nfa()[2].next2);
+  EXPECT_EQ(kAccept, p.nfa()[3].opcode);
+  EXPECT_EQ(2, p.nfa().start_id());
+}
+
+TEST(RegexParserTest, EmptyPlus) {
+  std::string v("()+");
+  auto p = make_parser(v);
+  ASSERT_EQ(4u, p.nfa().size());
+  EXPECT_EQ(kGoto, p.nfa()[0].opcode);
+  EXPECT_EQ(2, p.nfa()[0].next);
+  EXPECT_EQ(kAdvance, p.nfa()[1].opcode);
+  EXPECT_EQ(0, p.nfa()[1].next);
+  EXPECT_EQ(kFork, p.nfa()[2].opcode);
+  EXPECT_EQ(1, p.nfa()[2].next);
+  EXPECT_EQ(3, p.nfa()[2].next2);
+  EXPECT_EQ(kAccept, p.nfa()[3].opcode);
+  EXPECT_EQ(1, p.nfa().start_id());
+}
+
+TEST(RegexParserTest, IllegalStar) {
+  std::string v("*a");
+  EXPECT_THROW(make_parser(v), RegexError);
+}
+
+TEST(RegexParserTest, IllegalPlus) {
+  std::string v("+a");
+  EXPECT_THROW(make_parser(v), RegexError);
+}
+
+TEST(RegexParserTest, IllegalOptional) {
+  std::string v("?a");
+  EXPECT_THROW(make_parser(v), RegexError);
+}
+
+TEST(RegexParserTest, IllegalGroupA) {
+  std::string v("a(bc");
+  EXPECT_THROW(make_parser(v), RegexError);
+}
+
+TEST(RegexParserTest, IllegalGroupB) {
+  std::string v("a(b)c)");
+  EXPECT_THROW(make_parser(v), RegexError);
+}
