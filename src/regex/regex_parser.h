@@ -101,6 +101,7 @@ class regex_parser {
   /*! \brief Parse nonterminal Sub and RestSub.
    */
   fragment parse_sub() {
+    unsigned group_id = nfa_.alloc_group_id();
     fragment prev = parse_seq();
 
     while (scanner_.cur_token() == k_or) {
@@ -119,7 +120,11 @@ class regex_parser {
       prev.maybe_empty = prev.maybe_empty || seq2.maybe_empty;
     }
 
-    return prev;
+    int group_start = nfa_.append_mark_group_start(prev.start, group_id);
+    int group_end = nfa_.append_mark_group_end(k_dangled, group_id);
+    link_dangled_pointer(prev.end, group_end);
+
+    return {group_start, group_end, prev.maybe_empty};
   }
 
   /*! \brief Parse nonterminal Seq and RestSeq.

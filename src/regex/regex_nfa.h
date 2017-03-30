@@ -40,6 +40,14 @@ enum opcode {
    * current position in the string to be matched in the thread.
    */
   k_advance,
+
+  /*! \brief Mark the start position of a group.
+   */
+  k_mark_group_start,
+
+  /*! \brief Mark the end position of a group.
+   */
+  k_mark_group_end,
 };
 
 /*! \brief Constants for the next and next2 field of an instruction.
@@ -81,6 +89,12 @@ struct instruction {
    * Used if opcode == k_fork.
    */
   int next2 = k_null;
+
+  /*! \brief The group id.
+   *
+   * Used if opcode == k_mark_group_start or k_mark_group_end.
+   */
+  unsigned group_id = -1;
 };
 
 template <class Instruction, class Allocator>
@@ -155,6 +169,34 @@ class nfa : public std::vector<Instruction, Allocator> {
     return this->size() - 1;
   }
 
+  /*! \brief Return the next group id.
+   */
+  unsigned alloc_group_id() { return next_group_id_++; }
+
+  /*! \brief Return the number of groups.
+   */
+  unsigned mark_count() const { return next_group_id_; }
+
+  /*! \brief Append an instruction of marking the start of a group.
+   */
+  int append_mark_group_start(int next, int group_id) {
+    instruction_type insn{k_mark_group_start};
+    insn.next = next;
+    insn.group_id = group_id;
+    this->push_back(insn);
+    return this->size() - 1;
+  }
+
+  /*! \brief Append an instruction of marking the end of a group.
+   */
+  int append_mark_group_end(int next, int group_id) {
+    instruction_type insn{k_mark_group_end};
+    insn.next = next;
+    insn.group_id = group_id;
+    this->push_back(insn);
+    return this->size() - 1;
+  }
+
   /*! \brief Assert the NFA is complete.
    *
    * A complete NFA has no dangled or unreachable next positions.
@@ -182,6 +224,7 @@ class nfa : public std::vector<Instruction, Allocator> {
 
  private:
   int start_id_ = -1;
+  unsigned next_group_id_ = 0;
 };
 }
 

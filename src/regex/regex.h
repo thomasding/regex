@@ -10,6 +10,10 @@
 
 namespace regex {
 
+enum match_flags {
+  k_match_longest = 1 << 0,
+};
+
 template <class CharT, class Traits = regex_traits<CharT>>
 class basic_regex {
  public:
@@ -62,6 +66,8 @@ class basic_regex {
   nfa_type& nfa() { return nfa_; }
 
   const nfa_type& nfa() const { return nfa_; }
+
+  unsigned mark_count() const { return 1; }
 
  private:
   parser_type parser_;
