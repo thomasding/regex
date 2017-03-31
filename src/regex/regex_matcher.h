@@ -2,9 +2,9 @@
 #define __REGEX_MATCHER_H__
 
 #include <cassert>
+#include <deque>
 #include <iterator>
 #include <set>
-#include <stack>
 
 #include "regex_nfa.h"
 
@@ -25,8 +25,10 @@ class regex_matcher {
         regex_(regex),
         results_(match_results),
         cur_closure_() {
-    add_to_closure(cur_closure_, regex_.nfa().start_id(), match_results_type());
+    add_to_closure(cur_closure_, regex_.nfa().start_id(), first,
+                   match_results_type());
     do_match();
+    results_.resize(regex_.mark_count());
   }
 
  private:
@@ -48,7 +50,7 @@ class regex_matcher {
   struct closure {
     /*! \brief The candidates of the next char matching.
      */
-    std::stack<candidate> candidates;
+    std::deque<candidate> candidates;
 
     /*! \brief The included NFA states, including the candidates and the
      * passing-by instructions.
@@ -62,7 +64,8 @@ class regex_matcher {
 
   /*! \brief Recursively add the e closure of pc to c.
    */
-  void add_to_closure(closure& c, int pc, match_results_type&& capture) {
+  void add_to_closure(closure& c, int pc, iterator sp,
+                      match_results_type&& capture) {
     if (c.nfa_states.find(pc) != c.nfa_states.end()) return;
     c.nfa_states.insert(pc);
 
@@ -70,23 +73,23 @@ class regex_matcher {
     switch (insn.opcode) {
       case k_match_char_category:
       case k_accept:
-        c.candidates.emplace(pc, std::move(capture));
+        c.candidates.push_back(candidate{pc, std::move(capture)});
         break;
       case k_goto:
       case k_advance:
-        add_to_closure(c, insn.next, std::move(capture));
+        add_to_closure(c, insn.next, sp, std::move(capture));
         break;
       case k_fork:
-        add_to_closure(c, insn.next, match_results_type(capture));
-        add_to_closure(c, insn.next2, std::move(capture));
+        add_to_closure(c, insn.next, sp, match_results_type(capture));
+        add_to_closure(c, insn.next2, sp, std::move(capture));
         break;
       case k_mark_group_start:
-        capture.set_sub_start(insn.group_id, cur_);
-        add_to_closure(c, insn.next, std::move(capture));
+        capture.set_sub_start(insn.group_id, sp);
+        add_to_closure(c, insn.next, sp, std::move(capture));
         break;
       case k_mark_group_end:
-        capture.set_sub_end(insn.group_id, cur_);
-        add_to_closure(c, insn.next, std::move(capture));
+        capture.set_sub_end(insn.group_id, sp);
+        add_to_closure(c, insn.next, sp, std::move(capture));
         break;
       default:
         assert(false);
@@ -104,8 +107,9 @@ class regex_matcher {
       auto& insn = regex_.nfa().at(cand.pc);
       switch (insn.opcode) {
         case k_match_char_category:
-          if (insn.cc.match(*cur_)) {
-            add_to_closure(next_closure, insn.next, std::move(cand.capture));
+          if (cur_ != last_ && insn.cc.match(*cur_)) {
+            add_to_closure(next_closure, insn.next, std::next(cur_),
+                           std::move(cand.capture));
           }
           break;
         case k_accept:
@@ -115,6 +119,8 @@ class regex_matcher {
           results_.set_ready();
           discard_others = true;
           break;
+        default:
+          assert(false);
       }
     }
 
@@ -125,7 +131,7 @@ class regex_matcher {
   /*! \brief Match the string.
    */
   void do_match() {
-    while (!cur_closure_.candidates.empty() && cur_ != last_) {
+    while (!cur_closure_.candidates.empty()) {
       advance();
     }
   }

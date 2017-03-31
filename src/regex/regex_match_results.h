@@ -33,14 +33,14 @@ class sub_match {
    */
   operator string_type() const {
     if (matched_)
-      return StringType(first_, last_);
+      return string_type(first_, last_);
     else
       return {};
   }
 
   /*! \brief Get the matched string.
    */
-  string_type str() const { return StringType(first_, last_); }
+  string_type str() const { return string_type(first_, last_); }
 
   bool matched() const { return matched_; }
 
@@ -96,7 +96,7 @@ class match_results : public std::vector<sub_match<BidirIt>, Allocator> {
   }
 
  private:
-  bool ready_;
+  bool ready_ = false;
 };
 }
 
