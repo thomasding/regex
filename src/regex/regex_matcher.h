@@ -33,6 +33,11 @@ class regex_matcher {
   BidirIt cur_;
   BidirIt last_;
 
+  /*! \brief The matching candidates.
+   *
+   * Only the instructions of k_match_char_category and k_accept can be a
+   * matching candidate.
+   */
   struct candidate {
     int pc;
     match_results_type capture;
@@ -41,10 +46,12 @@ class regex_matcher {
   /*! \brief A e-closure of a NFA-state.
    */
   struct closure {
-    /*! \brief The candidates of regex matching.
+    /*! \brief The candidates of the next char matching.
      */
     std::stack<candidate> candidates;
-    /*! \brief The included NFA states.
+
+    /*! \brief The included NFA states, including the candidates and the
+     * passing-by instructions.
      */
     std::set<int> nfa_states;
   };
@@ -112,12 +119,13 @@ class regex_matcher {
     }
 
     cur_closure_ = std::move(next_closure);
+    ++cur_;
   }
 
   /*! \brief Match the string.
    */
   void do_match() {
-    while (!cur_closure_.candidates.empty()) {
+    while (!cur_closure_.candidates.empty() && cur_ != last_) {
       advance();
     }
   }
