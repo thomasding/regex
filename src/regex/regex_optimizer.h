@@ -3,8 +3,8 @@
 
 #include <cassert>
 
-#include "regex_nfa.h"
 #include "regex_except.h"
+#include "regex_nfa.h"
 
 namespace regex {
 
@@ -88,12 +88,14 @@ class redundant_insn_optimizer {
         if (ni != -1 && nfa_[ni].opcode == k_goto) {
           ni = next_[ni];
           changed = true;
-          assert (ni != i);
+          assert(ni != i);
         }
       }
     } while (changed);
 
-    for (auto ni : next_) assert(nfa_[ni].opcode != k_goto);
+    for (auto ni : next_) {
+      assert(ni == -1 || nfa_[ni].opcode != k_goto);
+    }
   }
 
   /*! \brief Remove the GOTO instructions.
