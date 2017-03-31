@@ -204,20 +204,25 @@ class nfa : public std::vector<Instruction, Allocator> {
   void assert_complete() {
     int max_insn_id = int(this->size()) - 1;
     for (auto& insn : *this) {
-      if (insn.opcode == k_match_char_category) {
-        insn.cc.assert_not_empty();
-        assert(insn.next >= 0 && insn.next <= max_insn_id);
-      } else if (insn.opcode == k_goto) {
-        assert(insn.next >= 0 && insn.next <= max_insn_id);
-      } else if (insn.opcode == k_fork) {
-        assert(insn.next >= 0 && insn.next <= max_insn_id);
-        assert(insn.next2 >= 0 && insn.next2 <= max_insn_id);
-      } else if (insn.opcode == k_advance) {
-        assert(insn.next >= 0 && insn.next <= max_insn_id);
-      } else if (insn.opcode == k_accept) {
-        /* Empty */
-      } else {
-        assert(false);
+      switch (insn.opcode) {
+        case k_match_char_category:
+          insn.cc.assert_not_empty();
+          assert(insn.next >= 0 && insn.next <= max_insn_id);
+          break;
+        case k_goto:
+        case k_advance:
+        case k_mark_group_start:
+        case k_mark_group_end:
+          assert(insn.next >= 0 && insn.next <= max_insn_id);
+          break;
+        case k_fork:
+          assert(insn.next >= 0 && insn.next <= max_insn_id);
+          assert(insn.next2 >= 0 && insn.next2 <= max_insn_id);
+          break;
+        case k_accept:
+          break;
+        default:
+          assert(false);
       }
     }
   }
