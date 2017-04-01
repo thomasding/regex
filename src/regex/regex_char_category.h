@@ -18,8 +18,9 @@ class char_category {
   /*! \brief The type of the character category.
    */
   enum category_type {
-    k_empty,       //!< Does not match any character
+    k_empty,        //!< Does not match any character
     k_single_char,  //!< A single character
+    k_any_char,     //!< Any character
   };
 
   /*! \brief Create a category of no character.
@@ -30,23 +31,30 @@ class char_category {
    */
   explicit char_category(char_type ch) : type_(k_single_char), ch_(ch) {}
 
+  /*! \brief Make a char category that matches any character.
+   */
+  static char_category any_char() {
+    char_category c;
+    c.type_ = k_any_char;
+    return c;
+  }
+
   /*! \brief Return true if ch is in the category.
    */
   bool match(char_type ch) const {
-    if (type_ == k_single_char) {
-      return ch == ch_;
-    } if (type_ == k_empty) {
-      assert(false);
-    } else {
-      assert(false);
+    switch (type_) {
+      case k_single_char:
+        return ch == ch_;
+      case k_any_char:
+        return true;
+      default:
+        assert(false);
     }
   }
 
   /*! \brief Assert the category is not empty.
    */
-  void assert_not_empty() const {
-    assert(type_ != k_empty);
-  }
+  void assert_not_empty() const { assert(type_ != k_empty); }
 
  private:
   category_type type_;
