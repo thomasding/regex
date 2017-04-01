@@ -24,7 +24,7 @@ TEST(RegexScannerTest, OrdinarySequence) {
   EXPECT_EQ(k_left_group, s.cur_token());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('a', s.cur_char());
+  EXPECT_EQ('a', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_star, s.cur_token());
   s.advance();
@@ -33,7 +33,7 @@ TEST(RegexScannerTest, OrdinarySequence) {
   EXPECT_EQ(k_or, s.cur_token());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('b', s.cur_char());
+  EXPECT_EQ('b', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_left_group, s.cur_token());
   s.advance();
@@ -49,25 +49,25 @@ TEST(RegexScannerTest, EscapedSequence) {
   auto s = make_scanner(v);
 
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('*', s.cur_char());
+  EXPECT_EQ('*', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('+', s.cur_char());
+  EXPECT_EQ('+', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('?', s.cur_char());
+  EXPECT_EQ('?', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('(', s.cur_char());
+  EXPECT_EQ('(', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ(')', s.cur_char());
+  EXPECT_EQ(')', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('|', s.cur_char());
+  EXPECT_EQ('|', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_character, s.cur_token());
-  EXPECT_EQ('\\', s.cur_char());
+  EXPECT_EQ('\\', s.cur_cc().ch());
   s.advance();
   EXPECT_EQ(k_eof, s.cur_token());
 }

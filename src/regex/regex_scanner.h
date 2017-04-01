@@ -13,14 +13,27 @@ namespace regex {
 /*! \brief The type of the tokens.
  */
 enum token {
-  k_eof,         //!< The scanner has reached the end
-  k_star,        //!< Kleene-star "*" quantifier
-  k_plus,        //!< Kleene-plus "+" quantifier
-  k_optional,    //!< Optional "?" quantifier
-  k_or,          //!< "|" operator
-  k_left_group,   //!< "(" operator
-  k_right_group,  //!< ")" operator
-  k_character,   //!< An ordinary character
+  k_eof,            //!< The scanner has reached the end
+  k_star,           //!< Kleene-star "*" quantifier
+  k_plus,           //!< Kleene-plus "+" quantifier
+  k_optional,       //!< Optional "?" quantifier
+  k_or,             //!< "|" operator
+  k_left_group,     //!< "(" operator
+  k_right_group,    //!< ")" operator
+  k_character,      //!< An ordinary character
+  k_left_bracket,   //!< "[" operator
+  k_right_bracket,  //!< "]" operator
+  k_negation,       //!< "^" as the first character after a left bracket
+  k_char_class,     //!< a character class
+};
+
+/*! \brief Character classes.
+ */
+enum character_class {
+  k_cc_alnum,     //!< [:alnum:] = [A-Za-z0-9]
+  k_cc_word,      //!< [:word] = \w = [A-Za-z0-9_]
+  k_cc_not_word,  //!< \W = [^A-Za-z0-9_]
+  k_cc_
 };
 
 /*! \brief The scanner of the regex.
@@ -32,6 +45,7 @@ class regex_scanner {
   typedef typename std::iterator_traits<iterator>::value_type char_type;
   typedef const std::ctype<char_type> ctype_type;
   typedef std::locale locale_type;
+  typedef char_category<char_type> char_category_type;
 
   regex_scanner(iterator first, iterator last, const locale_type& loc)
       : first_(first),
@@ -45,11 +59,12 @@ class regex_scanner {
    */
   token cur_token() const noexcept { return cur_token_; }
 
-  /*! \brief Return the current character.
+  /*! \brief Return the current character category.
    *
-   * The current character is valid only if the current token is kCharacter.
+   * The current character category is valid only if the current token is
+   * k_character.
    */
-  char_type cur_char() const noexcept { return cur_char_; }
+  char_category_type cur_cc() const noexcept { return cur_cc_; }
 
   /*! \brief Return the current position.
    */
@@ -82,7 +97,7 @@ class regex_scanner {
       eat_escape();
     } else {
       cur_token_ = k_character;
-      cur_char_ = *first_;
+      cur_cc_ = char_category_type::ordinary_char(*first_);
       advance_char();
     }
   }
@@ -94,7 +109,7 @@ class regex_scanner {
   ctype_type& ctype_;
 
   token cur_token_;
-  char_type cur_char_;
+  char_category_type cur_cc_;
 
   /*! \brief Eat the escaped character.
    *
@@ -114,7 +129,7 @@ class regex_scanner {
         c == ctype_.widen(')') || c == ctype_.widen('\\') ||
         c == ctype_.widen('|')) {
       cur_token_ = k_character;
-      cur_char_ = c;
+      cur_cc_ = char_category_type::ordinary_char(c);
       advance_char();
     } else {
       regex_throw(k_escape_bad_char, pos_);

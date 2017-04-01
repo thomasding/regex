@@ -214,8 +214,7 @@ class regex_parser {
    */
   fragment parse_atom() {
     if (scanner_.cur_token() == k_character) {
-      int sid = nfa_.append_match_char_category(
-          char_category_type(scanner_.cur_char()), k_dangled);
+      int sid = nfa_.append_match_char_category(scanner_.cur_cc(), k_dangled);
       scanner_.advance();
       return {sid, sid, false};
     } else if (scanner_.cur_token() == k_left_group) {
